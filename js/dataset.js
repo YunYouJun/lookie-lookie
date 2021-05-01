@@ -1,6 +1,6 @@
 window.dataset = {
-  inputWidth: $('#eyes').width(),
-  inputHeight: $('#eyes').height(),
+  inputWidth: $("#eyes").width(),
+  inputHeight: $("#eyes").height(),
   train: {
     n: 0,
     x: null,
@@ -12,19 +12,16 @@ window.dataset = {
     y: null,
   },
 
-  getImage: function() {
+  getImage: function () {
     // Capture the current image in the eyes canvas as a tensor.
-    return tf.tidy(function() {
-      const image = tf.browser.fromPixels(document.getElementById('eyes'));
+    return tf.tidy(function () {
+      const image = tf.browser.fromPixels(document.getElementById("eyes"));
       const batchedImage = image.expandDims(0);
-      return batchedImage
-        .toFloat()
-        .div(tf.scalar(127))
-        .sub(tf.scalar(1));
+      return batchedImage.toFloat().div(tf.scalar(127)).sub(tf.scalar(1));
     });
   },
 
-  getMetaInfos: function(mirror) {
+  getMetaInfos: function (mirror) {
     // Get some meta info about the rectangle as a tensor:
     // - middle x, y of the eye rectangle, relative to video size
     // - size of eye rectangle, relative to video size
@@ -44,20 +41,20 @@ window.dataset = {
       x = 1 - x;
       y = 1 - y;
     }
-    return tf.tidy(function() {
+    return tf.tidy(function () {
       return tf.tensor1d([x, y, rectWidth, rectHeight]).expandDims(0);
     });
   },
 
-  whichDataset: function() {
+  whichDataset: function () {
     // Returns 'train' or 'val' depending on what makes sense / is random.
     if (dataset.train.n == 0) {
-      return 'train';
+      return "train";
     }
     if (dataset.val.n == 0) {
-      return 'val';
+      return "val";
     }
-    return Math.random() < 0.2 ? 'val' : 'train';
+    return Math.random() < 0.2 ? "val" : "train";
   },
 
   rgbToGrayscale(imageArray, n, x, y) {
@@ -78,7 +75,7 @@ window.dataset = {
     return gleam * 2 - 1;
   },
 
-  convertImage: async function(image) {
+  convertImage: async function (image) {
     // Convert to grayscale and add spatial info
     const imageShape = image.shape;
     const imageArray = await image.array();
@@ -101,7 +98,7 @@ window.dataset = {
     return tf.tensor(data);
   },
 
-  addToDataset: function(image, metaInfos, target, key) {
+  addToDataset: function (image, metaInfos, target, key) {
     // Add the given x, y to either 'train' or 'val'.
     const set = dataset[key];
 
@@ -124,14 +121,14 @@ window.dataset = {
     set.n += 1;
   },
 
-  addExample: async function(image, metaInfos, target, dontDispose) {
+  addExample: async function (image, metaInfos, target, dontDispose) {
     // Given an image, eye pos and target coordinates, adds them to our dataset.
     target[0] = target[0] - 0.5;
     target[1] = target[1] - 0.5;
     target = tf.keep(
-      tf.tidy(function() {
+      tf.tidy(function () {
         return tf.tensor1d(target).expandDims(0);
-      }),
+      })
     );
     const key = dataset.whichDataset();
 
@@ -146,19 +143,22 @@ window.dataset = {
     }
   },
 
-  captureExample: function() {
+  captureExample: function () {
     // Take the latest image from the eyes canvas and add it to our dataset.
     // Takes the coordinates of the mouse.
-    tf.tidy(function() {
+    tf.tidy(function () {
       const img = dataset.getImage();
-      const mousePos = mouse.getMousePos();
+      // const mousePos = mouse.getMousePos();
+
+      const mousePos = drawRandomDot();
+
       const metaInfos = tf.keep(dataset.getMetaInfos());
       dataset.addExample(img, metaInfos, mousePos);
     });
   },
 
-  toJSON: function() {
-    const tensorToArray = function(t) {
+  toJSON: function () {
+    const tensorToArray = function (t) {
       const typedArray = t.dataSync();
       return Array.prototype.slice.call(typedArray);
     };
@@ -195,7 +195,7 @@ window.dataset = {
     };
   },
 
-  fromJSON: function(data) {
+  fromJSON: function (data) {
     dataset.inputWidth = data.inputWidth;
     dataset.inputHeight = data.inputHeight;
     dataset.train.n = data.train.n;
